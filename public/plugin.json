@@ -4,6 +4,7 @@
   "main": "index.html",
   "version": "0.0.1",
   "author": "takenokos",
+  "logo": "icon.png",
   "features": [
     {
       "code": "BililivePigeon",
