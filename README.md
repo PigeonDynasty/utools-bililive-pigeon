@@ -27,3 +27,5 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 ## 感谢
 
 [std4453/bilibili-danmaku-client](https://github.com/std4453/bilibili-danmaku-client)
+
+ps: 使用的是自编译版本 修改了无法关闭连接的bug

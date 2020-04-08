@@ -4,11 +4,15 @@
   "main": "index.html",
   "version": "0.0.1",
   "author": "takenokos",
+  "homepage": "https://github.com/takenokos",
   "logo": "icon.png",
+  "pluginSetting": {
+    "single": false
+  },
   "features": [
     {
       "code": "BililivePigeon",
-      "explain": "Bililive Pigeon",
+      "explain": "BiliBili弹幕池",
       "cmds": [
         "blp",
         "BililivePigeon",

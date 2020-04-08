@@ -1,18 +1,5 @@
 <template>
   <div id="app">
-    <div class="ws-top">
-      <label>房间号：</label>
-      <input
-        type="text"
-        class="input-room"
-        placeholder="房间号"
-        v-model="roomId"
-      >
-      <button
-        class="btn-link"
-        @click="link"
-      >{{isLink?'断开':'连接'}}</button>
-    </div>
     <div
       ref="danmuBox"
       class="ws-box"
@@ -24,18 +11,18 @@
         v-html="msg"
       />
     </div>
+
   </div>
 </template>
 
 <script>
 import { getTrueRoomId, getUserInfo } from './api'
-import DanmakuClient from 'bilibili-danmaku-client'
+import DanmakuClient from '@/assets/bilibili-danmaku-client'
+const utools = window.utools
 export default {
   name: 'App',
   data: () => ({
     roomId: null,
-    isLink: false,
-    popularity: 0, // 人气值
     filterKey: '', // 弹幕池过滤
     wsMessages: ['请先连接房间'], // 弹幕池
     WebSocket: null,
@@ -59,19 +46,41 @@ export default {
     },
   },
   destroyed () {
-    this.disconnectRoom()
+    document.onkeydown = null
+  },
+  beforeCreate () {
+    utools.onPluginEnter(() => {
+      utools.setSubInput(({ text }) => {
+        this.roomId = text
+      }, "直播间号（支持短位）");
+    });
+    document.onkeydown = e => {
+      switch (e.keyCode) {
+        case 13:
+          this.getTrueRoom();
+          utools.subInputBlur()
+          break;
+        case 32:
+          this.getTrueRoom();
+          utools.subInputBlur()
+          break;
+      }
+    }
   },
   methods: {
-    link () {
-      this.isLink ? this.disconnectRoom() : this.getTrueRoom()
-    },
     // 获取真实房间号
     getTrueRoom () {
+      if (this.WebSocket) {
+        // this.WebSocket.room = res.data.room_id
+        this.WebSocket.terminate()
+        console.log(this.WebSocket)
+        return
+      }
       const reg = /^[0-9]*$/
       if (!this.roomId || !reg.test(this.roomId)) {
         this.pushMessage({
           name: 'local',
-          text: '请输入正确的房间号'
+          text: '请检查所输入的房间号'
         })
         return
       }
@@ -91,31 +100,35 @@ export default {
           } else {
             this.pushMessage({
               name: 'local',
-              text: '房间号无效'
+              text: '房间号无效，请检查'
             })
           }
         })
         .catch(() => {
           this.pushMessage({
             name: 'local',
-            text: '连接失败'
+            text: '连接失败,请重试'
           })
         })
     },
     // 连接房间 弹幕池
     linkRoom (roomid) {
+      console.log(this.WebSocket)
       this.WebSocket = new DanmakuClient(roomid)
       this.WebSocket.start()
       this.WebSocket.on('open', () => {
-        this.isLink = true
+        this.pushMessage({
+          name: 'local',
+          text: '连接成功'
+        })
       })
       this.WebSocket.on('close', () => {
         this.WebSocket = null
         this.pushMessage({
           name: 'local',
-          text: '连接已断开'
+          text: '旧连接已断开'
         })
-        this.isLink = false
+        this.getTrueRoom()
       })
       this.WebSocket.on('event', (obj) => {
         this.pushMessage(obj)
@@ -131,8 +144,13 @@ export default {
         case 'danmaku':
           {
             const text = obj.content.content,
-              uname = obj.content.sender.name,
+              uname = obj.content.sender.name
+            let uface
+            try {
               uface = await this.getUserFace(obj.content.sender.uid)
+            } catch{
+              uface = "http://i0.hdslb.com/bfs/face/member/noface.jpg"
+            }
             html = `<span class="user-face" style="background-image:url(${uface})"></span>
                 <span class="user-name">${uname}</span>
                 ：${text}
@@ -165,12 +183,6 @@ export default {
       return getUserInfo(uid).then(res => {
         return res.data.face
       })
-    },
-    // 断开连接
-    disconnectRoom () {
-      if (this.WebSocket) {
-        this.WebSocket.terminate()
-      }
     }
   }
 }
@@ -193,35 +205,10 @@ body {
   height: calc(100% - 11px);
   padding: 8px;
 }
-.ws-top {
-  display: inline-flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.ws-top label {
-  height: 30px;
-  line-height: 30px;
-  font-size: 16px;
-}
-.ws-top .input-room {
-  height: 28px;
-  margin-right: 10px;
-  padding: 0 5px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-}
-.ws-top .btn-link {
-  height: 30px;
-  padding: 0 10px;
-  background: #66ccff;
-  color: #fff;
-  box-shadow: none;
-  border: none;
-  border-radius: 5px;
-}
 .ws-box {
   height: 100%;
   overflow: auto;
+  padding: 0 8px;
 }
 .ws-item {
   display: flex;

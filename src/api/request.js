@@ -14,10 +14,10 @@ export default function (options, cookieObj) {
   return new Promise((resolve, reject) => {
     request(config, (error, res, body) => {
       if (!error && res.statusCode === 200) {
-        console.log('request', JSON.parse(body))
+        // console.log('request', JSON.parse(body))
         resolve(JSON.parse(body))
       } else {
-        console.log('request', error)
+        // console.log('request', error)
         reject(error)
       }
     })
